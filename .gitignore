@@ -5,3 +5,12 @@ __pycache__/
 .pytest_cache/
 .streamlit/
 .DS_Store
+
+# Local logs
+*.log
+
+# Local database
+data/familysync.db
+
+# Local API configuration
+API.streamlit/

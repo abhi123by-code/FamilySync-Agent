@@ -8,9 +8,63 @@ load_dotenv()
 
 
 class LLMService:
-    def __init__(self) -> None:
-        self.api_key = os.getenv("OPENAI_API_KEY")
+    def __init__(
+        self,
+        api_key: str | None = None,
+        gemini_api_key: str | None = None,
+    ) -> None:
+        self.api_key = api_key or os.getenv("OPENAI_API_KEY")
+        self.gemini_api_key = gemini_api_key or os.getenv("GEMINI_API_KEY")
         self.model = os.getenv("OPENAI_MODEL", "gpt-4o-mini")
+        self.gemini_model = os.getenv("GEMINI_MODEL", "gemini-3.8-flash")
+
+    def chat_response(
+        self,
+        message: str,
+        family_context: str,
+        history: list[dict[str, str]] | None = None,
+    ) -> str:
+        from openai import OpenAI
+
+        if self.gemini_api_key:
+            client = OpenAI(
+                api_key=self.gemini_api_key,
+                base_url="https://generativelanguage.googleapis.com/v1beta/openai/",
+                timeout=30.0,
+                max_retries=1,
+            )
+            model = self.gemini_model
+        elif self.api_key:
+            client = OpenAI(api_key=self.api_key, timeout=30.0, max_retries=1)
+            model = self.model
+        else:
+            raise ValueError("No Gemini or OpenAI API key is configured.")
+
+        messages = [
+            {
+                "role": "system",
+                "content": (
+                    "You are FamilySync AI, a helpful family-planning assistant. "
+                    "Answer the user's actual question directly, including general questions. "
+                    "Use the family context when relevant, and never invent calendar events, "
+                    "task status, or actions. If the saved data does not answer a question, "
+                    "say what is missing and ask one concise follow-up. Keep replies clear "
+                    "and conversational.\n\n"
+                    f"Current family context (JSON): {family_context}"
+                ),
+            },
+            *(history or []),
+            {"role": "user", "content": message},
+        ]
+        response = client.chat.completions.create(
+            model=model,
+            messages=messages,
+            temperature=0.4,
+        )
+        answer = response.choices[0].message.content
+        if not answer or not answer.strip():
+            raise RuntimeError("The AI provider returned an empty response.")
+        return answer.strip()
 
     def parse_request(self, request: str) -> dict:
         if not self.api_key:

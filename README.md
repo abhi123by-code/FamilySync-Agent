@@ -88,20 +88,22 @@ python -m pytest tests -q
 The app reads the following environment variables:
 
 ```env
-OPENAI_API_KEY=your-openai-api-key
+GEMINI_API_KEY=your-gemini-api-key
+GEMINI_MODEL=gemini-3.8-flash
+OPENAI_API_KEY=your-openai-api-key  # Optional fallback provider
 OPENAI_MODEL=gpt-4o-mini
 WEATHER_API_KEY=
 WEATHER_LOCATION=Hyderabad
 ```
 
-If `OPENAI_API_KEY` is missing or the API request fails, the app falls back to local structured parsing and clearly labels the result as a demo fallback. This preserves local testing without inventing a live LLM response.
+The app reads `GEMINI_API_KEY` or `OPENAI_API_KEY` from environment variables, Streamlit secrets, or `API.streamlit/secrets.toml`. If no provider key is configured, FamilySync AI explains that configuration is needed rather than returning a canned conversational answer.
 
 ## Limitations
 
 - This is a prototype, not a production scheduling system.
 - The app uses local demo data instead of real user accounts or external calendars.
-- The weather card is demo data unless a real API is configured.
-- The family chat is a mock interface for the demo flow.
+- The dashboard shows a fixed Bengaluru demo weather card (Sunny, 27°C); it does not request device location or fetch live weather.
+- Regular family chat is a mock interface; FamilySync AI uses the configured Gemini or OpenAI provider for conversational replies grounded in family events and tasks.
 
 ## Judge demo script
 

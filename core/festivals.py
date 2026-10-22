@@ -36,49 +36,91 @@ _MOVABLE_FESTIVALS = {
     2025: {
         (3, 14): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (8, 27): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 2): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (10, 20): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
     2026: {
         (3, 4): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (9, 14): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 20): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (11, 8): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
     2027: {
         (3, 22): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (9, 4): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 10): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (10, 29): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
     2028: {
         (3, 11): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (8, 23): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 5): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (10, 17): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
     2029: {
         (3, 1): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (9, 11): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 13): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (11, 5): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
     2030: {
         (3, 20): Festival("Holi", "May your day be filled with colour, laughter, and togetherness.", "🎨"),
         (9, 1): Festival("Ganesh Chaturthi", "Wishing your family wisdom, joy, and new beginnings.", "🐘"),
+        (10, 2): Festival("Dussehra (Vijayadashami)", "Celebrate the victory of good over evil and the joy of new beginnings.", "🎉"),
         (10, 26): Festival("Diwali", "May the festival of lights bring warmth and happiness to your home.", "🪔"),
     },
 }
 
+_SPECIAL_DAY_FALLBACK = Festival(
+    "Special Day",
+    "Every day is a chance to celebrate love, gratitude, and togetherness.",
+    "✨",
+)
 
-def get_festival_for_date(day: date) -> Festival | None:
-    """Return a supported Indian or international celebration for the given day."""
+_INDIAN_FESTIVAL_KEYWORDS = (
+    "india",
+    "dussehra",
+    "vijayadashami",
+    "diwali",
+    "holi",
+    "ganesh",
+    "makar",
+    "republic",
+    "independence",
+    "teachers",
+    "children",
+    "gandhi",
+    "navratri",
+)
+
+
+def _is_indian_festival(festival: Festival) -> bool:
+    value = festival.name.lower()
+    return any(keyword in value for keyword in _INDIAN_FESTIVAL_KEYWORDS)
+
+
+def get_festival_for_date(day: date) -> Festival:
+    """Return the most relevant Indian or international celebration for the given day."""
+    matches: list[Festival] = []
+
     movable = _MOVABLE_FESTIVALS.get(day.year, {}).get((day.month, day.day))
     if movable:
-        return movable
+        matches.append(movable)
 
     annual = _ANNUAL_FESTIVALS.get((day.month, day.day))
     if annual:
-        return annual
+        matches.append(annual)
 
     if day.month == 7 and day.day == 30:
-        return Festival("International Friendship Day", "Celebrate the friends who make life brighter.", "🫶")
+        matches.append(Festival("International Friendship Day", "Celebrate the friends who make life brighter.", "🫶"))
     if day.month == 8 and day.weekday() == 6 and 1 <= day.day <= 7:
-        return Festival("Friendship Day", "Reach out to a friend and share a little happiness.", "🤝")
+        matches.append(Festival("Friendship Day", "Reach out to a friend and share a little happiness.", "🤝"))
 
-    return None
+    if not matches:
+        return _SPECIAL_DAY_FALLBACK
+
+    for festival in matches:
+        if _is_indian_festival(festival):
+            return festival
+
+    return matches[0]
